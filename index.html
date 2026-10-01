@@ -1,4 +1,9 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#020A22">
 <title>AI Experience</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -81,8 +86,19 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;paddin
 .goals{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .goal{display:grid;place-items:center;text-align:center;min-height:110px;padding:16px 12px;font-size:20px;font-weight:600;line-height:1.2;text-wrap:balance}
 .kw{font-weight:700;color:#7CC4FF;text-shadow:0 0 12px rgba(58,160,255,.55)}
-.cta.go-green{background:#1E9E5A;width:50%;align-self:flex-start}
+.cta.go-green{background:#1E9E5A}
 .cta.go-green:hover,.cta.go-green:focus-visible{background:#27B86A}
+.name-form{display:flex;flex-direction:column;gap:8px}
+.name-label{font-size:14px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+.name-input{width:100%;min-height:54px;padding:0 16px;font:inherit;font-size:20px;color:#fff;border-radius:10px;outline:none}
+.name-input::placeholder{color:rgba(225,236,255,.45)}
+.name-input:focus{border-color:#fff;box-shadow:0 0 0 1px #fff,0 0 20px rgba(120,190,255,.45)}
+.name-form.bad .name-input{border-color:var(--warn)}
+.name-help{font-size:14px;color:var(--soft);min-height:1.2em}
+.name-form.bad .name-help{color:var(--warn)}
+.name-form .cta{margin-top:8px}
+.cta:disabled{opacity:.4;cursor:not-allowed}
+.pname{font-weight:600;color:#E7C6FF;text-shadow:0 0 14px rgba(199,125,255,.8)}
 /* menu */
 .title{font-size:clamp(26px,7.5vw,32px)}
 .menu{display:flex;flex-direction:column;gap:12px}
@@ -129,9 +145,9 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;paddin
 .phrase{display:inline-block;color:#fff;font-weight:700;border:1px solid var(--accent);border-radius:4px;padding:0 6px}
 .pair{overflow:hidden;padding:0}
 .pair > div{padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
-.bad{border-bottom:1px solid var(--edge)}
-.bad p{color:var(--soft)}
-.good{background:linear-gradient(90deg,rgba(58,160,255,.18),rgba(58,160,255,.04))}
+.bad{background:rgba(229,72,72,.32);border-bottom:1px solid var(--edge)}
+.bad p{color:#fff}
+.good{background:rgba(30,158,90,.38)}
 .good p{font-weight:600}
 .tagp{align-self:flex-start;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
 .bad .tagp{color:var(--warn)}
@@ -196,7 +212,14 @@ body.portal-mode .bgfill,body.portal-mode #waves{opacity:0}
 .dots i{width:7px;height:7px;border-radius:50%;background:var(--edge)}
 .dots i.on{background:#fff;box-shadow:0 0 8px rgba(120,190,255,.8)}
 </style>
-
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
 <div class="bgfill" aria-hidden="true"></div>
 <canvas id="waves" aria-hidden="true"></canvas>
 
@@ -222,6 +245,32 @@ body.portal-mode .bgfill,body.portal-mode #waves{opacity:0}
 </div>
 
 <script>
+
+/* player name (required on the first page) */
+let playerName='';
+const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const NAME_RE=/^[\p{L}]{1,10}$/u;
+function setupName(){
+  const form=document.getElementById('nameForm'); if(!form) return;
+  const input=document.getElementById('firstName'), help=document.getElementById('nameHelp'), btn=document.getElementById('learnBtn');
+  const check=()=>{
+    const v=input.value.trim();
+    const ok=NAME_RE.test(v);
+    btn.disabled=!ok;
+    form.classList.toggle('bad',v.length>0&&!ok);
+    help.textContent=v.length>0&&!ok?'Use letters only (no spaces, numbers or symbols).':'';
+    return ok;
+  };
+  input.addEventListener('input',()=>{ input.value=input.value.replace(/\s+/g,'').slice(0,10); check(); });
+  form.addEventListener('submit',e=>{
+    e.preventDefault();
+    if(!check()){ input.focus(); return; }
+    playerName=input.value.trim();
+    if(music && wantMusic && !music.on){ music.start(); setSnd(true); }
+    show('menu');
+  });
+  check();
+}
 
 /* prompts page: one hint at a time */
 function setupHints(){
@@ -313,7 +362,12 @@ home:()=>`
   <div class="stats">
     <div class="stat glass"><b>12+</b><span>Age</span></div>
   </div>
-  <button class="cta" data-go="menu">Learn more ${I.go}</button>
+  <form class="name-form" id="nameForm" novalidate>
+    <label class="name-label" for="firstName">Enter your Name</label>
+    <input class="name-input glass" id="firstName" name="firstName" type="text" maxlength="10" autocomplete="given-name" autocapitalize="words" spellcheck="false" placeholder="Type your name" value="" required>
+    <span class="name-help" id="nameHelp"></span>
+    <button class="cta" id="learnBtn" type="submit" data-go-guard>Learn more ${I.go}</button>
+  </form>
 `,
 menu:()=>`
   <h2 class="title">What do you want to see?</h2>
@@ -338,7 +392,7 @@ participate:()=>`
   <div class="cards">
     ${[
       ['Sign up at Netlify','Make a free account at <b>netlify.com</b>.','i1'],
-      ['Tell Netlify\'s AI your idea','Open Netlify and describe your game to its AI agent.','i2'],
+      ['Tell Netlify\'s AI your idea','Open Netlify and describe your game.','i2'],
       ['Test and improve','Play it on a phone. Ask the AI to fix things.','i4'],
       ['Send us your link','Netlify puts your game online.','i3']
     ].map((s,i)=>card(i+1,s[2],s[0],s[1],`<span class="lvl">Step ${i+1}</span>`)).join('')}
@@ -359,8 +413,8 @@ prompts:()=>`
       ['Copy Mario Kart.','A racing game with snails on a kitchen table. Dodge the spilled juice!'],
       ['A game for two.','A split-screen game for 2 players on one phone. Each player taps their half to make their penguin jump. First to the igloo wins!']
     ].map(p=>`<section class="hint"><div class="pair glass">
-      <div class="bad"><span class="tagp">✗ Too generic</span><p>"${p[0]}"</p></div>
-      <div class="good"><span class="tagp">✓ Creative</span><p>"${p[1]}"</p></div>
+      <div class="bad"><p>"${p[0]}"</p></div>
+      <div class="good"><p>"${p[1]}"</p></div>
     </div></section>`).join('')}
     <section class="hint">
       <div class="tip glass"><span class="ic">!</span>Build one small part first, then ask for more.</div>
@@ -375,7 +429,7 @@ prompts:()=>`
 `,
 portal:()=>`
   <div class="portal-page">
-    <p class="portal-hint">Tap the portal to enter</p>
+    <p class="portal-hint">Are you ready, <b class="pname">${esc(playerName)}</b>?</p>
     <a class="portal" href="https://www.netlify.com" target="_blank" rel="noopener" aria-label="Enter the portal to Netlify">
       <span class="p-glow"></span>
       <span class="p-ring"></span>
@@ -405,12 +459,14 @@ faq:()=>`
 const view=document.getElementById('view'), backBtn=document.getElementById('backBtn'), valid=Object.keys(pages);
 function show(name,push=true){
   if(!valid.includes(name)) name='home';
+  if(name!=='home' && !playerName) name='home';
   view.className='view'; void view.offsetWidth; view.className='view enter';
   view.innerHTML=pages[name]();
   backBtn.hidden=name==='home';
   backBtn.dataset.to=name==='menu'?'home':(name==='prompts'||name==='portal')?'participate':'menu';
   if(name==='portal') startSparks(); else stopSparks();
   if(name==='prompts') setupHints();
+  if(name==='home') setupName();
   document.body.classList.toggle('portal-mode',name==='portal');
   if(push){ try{history.pushState({name},'',name==='home'?location.pathname:'#'+name);}catch(e){} }
   window.scrollTo(0,0);
@@ -615,5 +671,5 @@ tick(); setInterval(tick,15000);
   still?frame(0):requestAnimationFrame(frame);
 })();
 </script>
-
-</body></html>
+</body>
+</html>
