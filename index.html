@@ -233,6 +233,24 @@ body.portal-mode .bgfill,body.portal-mode #waves{opacity:0}
 .dots{display:flex;justify-content:center;gap:6px}
 .dots i{width:7px;height:7px;border-radius:50%;background:var(--edge)}
 .dots i.on{background:#fff;box-shadow:0 0 8px rgba(120,190,255,.8)}
+
+/* pink theme toggle */
+.theme-toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:12px 16px;text-align:left}
+.tt-label{font-size:18px;font-weight:600}
+.tt-track{position:relative;flex:none;width:52px;height:30px;border-radius:99px;background:rgba(255,255,255,.18);border:1px solid var(--edge);transition:background .2s}
+.tt-knob{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.35);transition:transform .2s}
+.theme-toggle[aria-checked="true"] .tt-track{background:#E0479A}
+.theme-toggle[aria-checked="true"] .tt-knob{transform:translateX(22px)}
+/* pink theme */
+body.pink{--bg-deep:#2A0A22;--bg-mid:#7A1D5E;--bg-glow:#D6408F;--accent:#FF9CCF;--btn:#D6338A;--btn-hi:#EC4FA0;--edge:rgba(255,220,238,.22);--glass:rgba(255,235,245,.08);--glass-hi:rgba(255,235,245,.16);--soft:rgba(255,232,244,.78)}
+body.pink .i1,body.pink .i2,body.pink .i3,body.pink .i4{--c1:#F05BA8;--c2:#A81F68}
+body.pink .kw{color:#FFB3DA;text-shadow:0 0 12px rgba(255,92,170,.6)}
+body.pink .brand .dot{background:linear-gradient(135deg,#FF7DBE,#C2186E);box-shadow:0 0 14px rgba(255,92,170,.6)}
+body.pink .snd[aria-pressed="true"]{box-shadow:0 0 12px rgba(255,92,170,.55)}
+body.pink .hero h1 b{background:linear-gradient(90deg,#fff,#FFC2E1);-webkit-background-clip:text;background-clip:text}
+body.pink .name-input:focus,body.pink .sel:hover,body.pink .sel:active{box-shadow:0 0 0 1px #fff,0 0 22px rgba(255,120,190,.55)}
+body.pink .dots i.on{box-shadow:0 0 8px rgba(255,140,200,.9)}
+body.pink .mascot{filter:drop-shadow(0 0 18px rgba(255,92,170,.6))}
 </style>
 <style>
 :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -268,6 +286,25 @@ img{max-width:100%}
 
 <script>
 
+/* pink theme for some names */
+const PINK_NAMES=['safa','noha','hawra','zainab','maryam','jenan','jinan','salma','fatima'];
+let pinkEligible=false, pinkOn=false;
+function setPink(on){
+  pinkOn=on;
+  document.body.classList.toggle('pink',on);
+  window.waveRGB=on?'255,170,215':'160,205,255';
+  window.dotRGB=on?'255,210,232':'200,225,255';
+  const m=document.querySelector('meta[name="theme-color"]'); if(m) m.content=on?'#2A0A22':'#020A22';
+  const t=document.getElementById('pinkToggle'); if(t) t.setAttribute('aria-checked',on);
+}
+function applyTheme(name){
+  pinkEligible=PINK_NAMES.includes(String(name).trim().toLowerCase());
+  setPink(pinkEligible);
+}
+document.addEventListener('click',e=>{
+  if(e.target.closest('#pinkToggle')) setPink(!pinkOn);
+});
+
 /* player name (required on the first page) */
 let playerName='';
 const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -288,6 +325,7 @@ function setupName(){
     e.preventDefault();
     if(!check()){ input.focus(); return; }
     playerName=input.value.trim();
+    applyTheme(playerName);
     if(music && wantMusic && !music.on){ music.start(); setSnd(true); }
     show('menu');
   });
@@ -397,6 +435,9 @@ menu:()=>`
     <button class="tile glass sel" data-go="objectives"><span class="ic i1">${I.target}</span><span class="t">Objectives</span><span class="go">${I.go}</span></button>
     <button class="tile glass sel" data-go="participate"><span class="ic i2">${I.pad}</span><span class="t">Instructions</span><span class="go">${I.go}</span></button>
     <button class="tile glass sel" data-go="faq"><span class="ic i3">${I.ask}</span><span class="t">FAQ</span><span class="go">${I.go}</span></button>
+    ${pinkEligible?`<button class="theme-toggle glass" id="pinkToggle" type="button" role="switch" aria-checked="${pinkOn}">
+      <span class="tt-label">Pink theme</span><span class="tt-track"><span class="tt-knob"></span></span>
+    </button>`:''}
   </nav>
 `,
 objectives:()=>`
@@ -682,13 +723,13 @@ tick(); setInterval(tick,15000);
           const y=H*w.y+Math.sin(x/W*Math.PI*2*w.len+t*w.spd+k*.18)*H*w.amp+Math.sin(x/W*Math.PI*3+t*w.spd*1.7)*H*.015+k*3;
           x?c.lineTo(x,y):c.moveTo(x,y);
         }
-        c.strokeStyle=`rgba(160,205,255,${w.alpha*(1-k/7)})`; c.lineWidth=w.width; c.stroke();
+        c.strokeStyle=`rgba(${window.waveRGB||'160,205,255'},${w.alpha*(1-k/7)})`; c.lineWidth=w.width; c.stroke();
       }
     }
     for(const d of dots){
       if(!still){d.y-=d.s; d.a+=.01; if(d.y<-4){d.y=H+4;d.x=Math.random()*W;}}
       c.beginPath(); c.arc(d.x,d.y,d.r,0,Math.PI*2);
-      c.fillStyle=`rgba(200,225,255,${.25+.35*Math.abs(Math.sin(d.a))})`; c.fill();
+      c.fillStyle=`rgba(${window.dotRGB||'200,225,255'},${.25+.35*Math.abs(Math.sin(d.a))})`; c.fill();
     }
     if(!still) requestAnimationFrame(frame);
   }
